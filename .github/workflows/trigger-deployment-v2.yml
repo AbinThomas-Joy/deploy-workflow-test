@@ -1,0 +1,30 @@
+name: Trigger Deployment v2
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout deploy_production
+        uses: actions/checkout@v4
+        with:
+          ref: deploy_production
+          fetch-depth: 0
+          token: ${{ secrets.DEPLOY_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Deploy
+        run: |
+          git pull
+          git tag deploy_production_lkg/$(date +%Y-%m-%dT%H-%M-%S)
+          git fetch origin main
+          git reset --hard origin/main
+          git tag -f deploy_production/$(date +%Y-%m-%d)
+          git push --force-with-lease
+          git push --tags --force
